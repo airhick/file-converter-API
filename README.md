@@ -81,6 +81,43 @@ Converts an uploaded image to the specified format.
 **Response:**
 - The converted image file
 
+## Deployment
+
+### Local Deployment with Docker
+```bash
+docker build -t image-converter-api .
+docker run -p 5000:5000 image-converter-api
+```
+
+### Deploying to Render
+
+1. Create a Render account at [render.com](https://render.com)
+
+2. Connect your GitHub repository to Render:
+   - Go to the Render dashboard
+   - Click "New" and select "Web Service"
+   - Connect your GitHub repository
+
+3. Configure the service:
+   - **Name**: Choose a name for your service (e.g., image-converter-api)
+   - **Environment**: Docker
+   - **Branch**: main (or your preferred branch)
+   - **Plan**: Free (or choose a paid plan for more resources)
+   - **Advanced Settings**: Add any environment variables if needed
+
+4. Click "Create Web Service"
+
+Render will automatically build and deploy your application. The deployment process may take a few minutes.
+
+#### Using render.yaml (Infrastructure as Code)
+
+Alternatively, you can use the provided `render.yaml` file for deployment:
+
+1. Push your code to GitHub
+2. In Render dashboard, go to "Blueprints"
+3. Connect your repository
+4. Render will detect the `render.yaml` file and set up the services accordingly
+
 ## License
 
-MIT # file-converter-API
+MIT
