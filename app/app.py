@@ -5,7 +5,8 @@ from werkzeug.utils import secure_filename
 import tempfile
 import logging
 
-from app.services.converter import ImageConverter
+# Import the non-rawpy version of the converter
+from app.services.converter_no_rawpy import ImageConverter
 from app.utils.format_validator import is_valid_format, get_supported_output_formats
 
 # Configure logging
