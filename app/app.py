@@ -5,8 +5,8 @@ from werkzeug.utils import secure_filename
 import tempfile
 import logging
 
-from services.converter import ImageConverter
-from utils.format_validator import is_valid_format, get_supported_output_formats
+from app.services.converter import ImageConverter
+from app.utils.format_validator import is_valid_format, get_supported_output_formats
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

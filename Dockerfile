@@ -25,9 +25,10 @@ COPY . .
 
 # Default port (can be overridden by environment)
 ENV PORT=5000
+ENV PYTHONPATH=/app
 
 # Expose the port the app runs on
 EXPOSE $PORT
 
 # Command to run the application
-CMD gunicorn --bind 0.0.0.0:$PORT app.app:app 
+CMD cd /app && gunicorn --bind 0.0.0.0:$PORT app.app:app 

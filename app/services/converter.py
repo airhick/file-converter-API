@@ -14,8 +14,8 @@ from pdf2image import convert_from_path
 import rawpy
 import numpy as np
 
-from utils.format_detector import detect_format
-from utils.format_validator import get_normalized_format, can_convert
+from app.utils.format_detector import detect_format
+from app.utils.format_validator import get_normalized_format, can_convert
 
 logger = logging.getLogger(__name__)
 
