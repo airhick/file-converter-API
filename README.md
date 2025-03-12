@@ -118,6 +118,14 @@ Alternatively, you can use the provided `render.yaml` file for deployment:
 3. Connect your repository
 4. Render will detect the `render.yaml` file and set up the services accordingly
 
+### Troubleshooting Render Deployment
+
+If you encounter import errors during deployment, make sure:
+
+1. Your import statements use absolute imports (e.g., `from app.services.converter import ImageConverter`)
+2. The `PYTHONPATH` environment variable is set to `/app` in both Dockerfile and render.yaml
+3. The gunicorn command in Dockerfile explicitly changes to the `/app` directory before starting
+
 ## License
 
 MIT
