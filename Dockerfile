@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY . .
 
+# Make sure the static and templates directories exist
+RUN mkdir -p /app/app/static/js /app/app/templates
+
 # Default port (can be overridden by environment)
 ENV PORT=5000
 ENV PYTHONPATH=/app

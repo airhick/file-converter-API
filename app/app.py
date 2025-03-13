@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import tempfile
@@ -24,6 +24,126 @@ app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy"}), 200
+
+@app.route('/', methods=['GET'])
+def index():
+    """Serve a simple HTML form for testing the API"""
+    html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Image Converter API</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                line-height: 1.6;
+            }
+            h1 {
+                color: #333;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 10px;
+            }
+            form {
+                background: #f9f9f9;
+                padding: 20px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+            select, input[type="file"], input[type="number"] {
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+            button {
+                background: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            button:hover {
+                background: #45a049;
+            }
+            .formats {
+                margin-top: 30px;
+            }
+            code {
+                background: #f5f5f5;
+                padding: 2px 5px;
+                border-radius: 3px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Image Converter API</h1>
+        <p>Use this form to test the image conversion API. The converted file will download automatically.</p>
+        
+        <form action="/convert" method="post" enctype="multipart/form-data">
+            <div>
+                <label for="image">Select Image:</label>
+                <input type="file" id="image" name="image" required>
+            </div>
+            
+            <div>
+                <label for="target_format">Target Format:</label>
+                <select id="target_format" name="target_format" required>
+                    <option value="jpg">JPEG</option>
+                    <option value="png">PNG</option>
+                    <option value="webp">WebP</option>
+                    <option value="gif">GIF</option>
+                    <option value="tiff">TIFF</option>
+                    <option value="bmp">BMP</option>
+                    <option value="pdf">PDF</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="quality">Quality (1-100):</label>
+                <input type="number" id="quality" name="quality" min="1" max="100" value="90">
+            </div>
+            
+            <button type="submit">Convert Image</button>
+        </form>
+        
+        <div class="formats">
+            <h2>API Documentation</h2>
+            <p>For programmatic access, send a POST request to <code>/convert</code> with the following parameters:</p>
+            <ul>
+                <li><code>image</code>: The image file to convert</li>
+                <li><code>target_format</code>: The desired output format (e.g., "png", "jpg", "webp")</li>
+                <li><code>quality</code> (optional): For lossy formats, the quality level (1-100)</li>
+            </ul>
+            
+            <h3>Example with cURL:</h3>
+            <pre><code>curl -X POST -F "image=@/path/to/image.jpg" -F "target_format=png" -F "quality=90" https://file-converter-api-kn5c.onrender.com/convert -o converted_image.png</code></pre>
+        </div>
+    </body>
+    </html>
+    """
+    return html
+
+@app.route('/advanced', methods=['GET'])
+def advanced():
+    """Serve the advanced HTML interface"""
+    try:
+        with open('app/templates/advanced.html', 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Advanced template not found", 404
 
 @app.route('/formats', methods=['GET'])
 def get_formats():
@@ -85,10 +205,38 @@ def convert_image():
         converter = ImageConverter()
         converter.convert(input_path, output_path, target_format, quality)
         
-        # Send the converted file
-        return send_file(output_path, 
-                         as_attachment=True, 
-                         download_name=f"{os.path.splitext(filename)[0]}.{target_format}")
+        # Generate a meaningful filename for the download
+        output_filename = f"{os.path.splitext(filename)[0]}.{target_format}"
+        
+        # Get the MIME type for the target format
+        mime_types = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'tiff': 'image/tiff',
+            'bmp': 'image/bmp',
+            'svg': 'image/svg+xml',
+            'pdf': 'application/pdf',
+            'eps': 'application/postscript'
+        }
+        mime_type = mime_types.get(target_format, 'application/octet-stream')
+        
+        # Send the converted file with headers optimized for download
+        response = send_file(
+            output_path,
+            as_attachment=True,  # Force download rather than display in browser
+            download_name=output_filename,
+            mimetype=mime_type
+        )
+        
+        # Add headers to encourage direct download
+        response.headers["Content-Disposition"] = f"attachment; filename={output_filename}"
+        response.headers["Content-Type"] = mime_type
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        
+        return response
     except Exception as e:
         logger.error(f"Conversion error: {str(e)}")
         return jsonify({"error": f"Conversion failed: {str(e)}"}), 500
@@ -98,6 +246,11 @@ def convert_image():
             os.remove(input_path)
         if 'output_path' in locals() and os.path.exists(output_path):
             os.remove(output_path)
+
+@app.route('/static/<path:path>')
+def serve_static(path):
+    """Serve static files"""
+    return send_from_directory('app/static', path)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
